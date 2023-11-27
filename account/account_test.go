@@ -402,6 +402,98 @@ func TestSignMOCK(t *testing.T) {
 	}
 
 }
+func TestAddInvokeV3(t *testing.T) {
+
+	type testSetType struct {
+		ExpectedError        *rpc.RPCError
+		CairoContractVersion int
+		SetKS                bool
+		AccountAddress       *felt.Felt
+		PubKey               *felt.Felt
+		PrivKey              *felt.Felt
+		InvokeTx             rpc.InvokeTxnV3
+		FnCall               rpc.FunctionCall
+		TxDetails            rpc.TxDetails
+	}
+	testSet := map[string][]testSetType{
+		"mock":   {},
+		"devnet": {},
+		"integration": {
+			{
+
+				ExpectedError:        rpc.ErrDuplicateTx,
+				CairoContractVersion: 0,
+				AccountAddress:       utils.TestHexToFelt(t, "0x043784df59268c02b716e20bf77797bd96c68c2f100b2a634e448c35e3ad363e"),
+				SetKS:                true,
+				PubKey:               utils.TestHexToFelt(t, "0x049f060d2dffd3bf6f2c103b710baf519530df44529045f92c3903097e8d861f"),
+				PrivKey:              utils.TestHexToFelt(t, "0x043b7fe9d91942c98cd5fd37579bd99ec74f879c4c79d886633eecae9dad35fa"),
+				InvokeTx: rpc.InvokeTxnV3{
+					Nonce:         new(felt.Felt).SetUint64(0),
+					Version:       rpc.TransactionV3,
+					Type:          rpc.TransactionType_Invoke,
+					SenderAddress: utils.TestHexToFelt(t, "0x043784df59268c02b716e20bf77797bd96c68c2f100b2a634e448c35e3ad363e"),
+					NonceDataMode: rpc.DAModeL1,
+					FeeMode:       rpc.DAModeL1,
+					ResourceBoundsMapping: rpc.ResourceBoundsMapping{
+						L1Gas: rpc.ResourceBounds{
+							MaxAmount:       utils.TestHexToFelt(t, "0x186a0"),
+							MaxPricePerUnit: utils.TestHexToFelt(t, "0x5af3107a4000"),
+						},
+						L2Gas: rpc.ResourceBounds{
+							MaxAmount:       new(felt.Felt),
+							MaxPricePerUnit: new(felt.Felt),
+						},
+					},
+					Tip:                   new(felt.Felt),
+					PayMasterData:         []*felt.Felt{},
+					AccountDeploymentData: []*felt.Felt{},
+				},
+				FnCall: rpc.FunctionCall{
+					ContractAddress:    utils.TestHexToFelt(t, "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"),
+					EntryPointSelector: utils.GetSelectorFromNameFelt("transfer"),
+					Calldata: []*felt.Felt{
+						utils.TestHexToFelt(t, "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"),
+						utils.TestHexToFelt(t, "0x1"),
+					},
+				},
+			},
+		},
+	}[testEnv]
+
+	for _, test := range testSet {
+		client, err := rpc.NewClient(base)
+		require.NoError(t, err, "Error in rpc.NewClient")
+		provider := rpc.NewProvider(client)
+
+		// Set up ks
+		ks := account.NewMemKeystore()
+		if test.SetKS {
+			fakePrivKeyBI, ok := new(big.Int).SetString(test.PrivKey.String(), 0)
+			require.True(t, ok)
+			ks.Put(test.PubKey.String(), fakePrivKeyBI)
+		}
+
+		acnt, err := account.NewAccount(provider, test.AccountAddress, test.PubKey.String(), ks)
+		require.NoError(t, err)
+
+		test.InvokeTx.Calldata, err = acnt.FmtCalldata([]rpc.FunctionCall{test.FnCall}, test.CairoContractVersion)
+		require.NoError(t, err)
+
+		test.InvokeTx.Signature, err = acnt.SignInvokeTransaction(context.Background(), test.InvokeTx)
+		require.NoError(t, err)
+
+		qwe, err := json.MarshalIndent(test.InvokeTx, "", "")
+		fmt.Println(string(qwe))
+
+		resp, err := acnt.AddInvokeTransaction(context.Background(), test.InvokeTx)
+		fmt.Println(resp, err)
+		if err != nil {
+			require.Equal(t, err.Error(), test.ExpectedError.Error())
+			require.Nil(t, resp)
+		}
+
+	}
+}
 
 // TestAddInvoke is a test function that verifies the behavior of the AddInvokeTransaction method.
 //
@@ -566,7 +658,7 @@ func TestAddInvoke(t *testing.T) {
 		test.InvokeTx.Calldata, err = acnt.FmtCalldata([]rpc.FunctionCall{test.FnCall}, test.CairoContractVersion)
 		require.NoError(t, err)
 
-		err = acnt.SignInvokeTransaction(context.Background(), &test.InvokeTx)
+		test.InvokeTx.Signature, err = acnt.SignInvokeTransaction(context.Background(), test.InvokeTx)
 		require.NoError(t, err)
 
 		resp, err := acnt.AddInvokeTransaction(context.Background(), test.InvokeTx)
@@ -757,7 +849,7 @@ func TestTransactionHashInvokeV3(t *testing.T) {
 					Signature: []*felt.Felt{
 						utils.TestHexToFelt(t, "0x71a9b2cd8a8a6a4ca284dcddcdefc6c4fd20b92c1b201bd9836e4ce376fad16"),
 						utils.TestHexToFelt(t, "0x6bef4745194c9447fdc8dd3aec4fc738ab0a560b0d2c7bf62fbf58aef3abfc5")},
-					ResourceBounds: rpc.ResourceBoundsMapping{
+					ResourceBoundsMapping: rpc.ResourceBoundsMapping{
 						L1Gas: rpc.ResourceBounds{
 							MaxAmount:       utils.TestHexToFelt(t, "0x186a0"),
 							MaxPricePerUnit: utils.TestHexToFelt(t, "0x5af3107a4000"),
@@ -1098,6 +1190,65 @@ func TestAddDeclareTxn(t *testing.T) {
 		require.Equal(t, expectedTxHash.String(), resp.TransactionHash.String(), "AddDeclareTransaction TxHash not what expected")
 		require.Equal(t, expectedClassHash.String(), resp.ClassHash.String(), "AddDeclareTransaction ClassHash not what expected")
 	}
+}
+
+func TestAddDeployAccountTxn(t *testing.T) {
+	if testEnv != "integration" {
+		t.Skip("Skipping test as it requires a integration environment")
+	}
+	client, err := rpc.NewClient(base)
+	require.NoError(t, err, "Error in rpc.NewClient")
+	provider := rpc.NewProvider(client)
+
+	AccountAddress := utils.TestHexToFelt(t, "0x043784df59268c02b716e20bf77797bd96c68c2f100b2a634e448c35e3ad363e")
+	PubKey := utils.TestHexToFelt(t, "0x043784df59268c02b716e20bf77797bd96c68c2f100b2a634e448c35e3ad363e")
+	PrivKey := utils.TestHexToFelt(t, "0x043b7fe9d91942c98cd5fd37579bd99ec74f879c4c79d886633eecae9dad35fa")
+
+	// Set up ks
+	ks := account.NewMemKeystore()
+	fakePrivKeyBI, ok := new(big.Int).SetString(PrivKey.String(), 0)
+	require.True(t, ok)
+	ks.Put(PubKey.String(), fakePrivKeyBI)
+
+	acnt, err := account.NewAccount(provider, AccountAddress, PubKey.String(), ks)
+	require.NoError(t, err)
+
+	classHash := utils.TestHexToFelt(t, "0x7b3e05f48f0c69e4a65ce5e076a66271a527aff2c34ce1083ec6e1526997a69") // preDeployed classhash
+	require.NoError(t, err)
+
+	tx := rpc.DeployAccountTxnV3{
+		Nonce:         &felt.Zero, // Contract accounts start with nonce zero.
+		Type:          rpc.TransactionType_DeployAccount,
+		Version:       rpc.TransactionV3,
+		Signature:     []*felt.Felt{},
+		ClassHash:     classHash,
+		NonceDataMode: rpc.DAModeL1,
+		FeeMode:       rpc.DAModeL1,
+		ResourceBoundsMapping: rpc.ResourceBoundsMapping{
+			L1Gas: rpc.ResourceBounds{
+				MaxAmount:       utils.TestHexToFelt(t, "0x186a0"),
+				MaxPricePerUnit: utils.TestHexToFelt(t, "0x5af3107a4000"),
+			},
+			L2Gas: rpc.ResourceBounds{
+				MaxAmount:       new(felt.Felt),
+				MaxPricePerUnit: new(felt.Felt),
+			},
+		},
+		Tip:                 new(felt.Felt),
+		PayMasterData:       []*felt.Felt{},
+		ContractAddressSalt: new(felt.Felt),
+		ConstructorCalldata: []*felt.Felt{
+			utils.TestHexToFelt(t, "AccountAddress"),
+		},
+	}
+
+	precomputedAddress, err := acnt.PrecomputeAddress(&felt.Zero, fakeUserPub, classHash, tx.ConstructorCalldata)
+	require.NoError(t, acnt.SignDeployAccountTransaction(context.Background(), &tx, precomputedAddress))
+
+	resp, err := acnt.AddDeployAccountTransaction(context.Background(), rpc.BroadcastDeployAccountTxn{DeployAccountTxn: tx})
+	require.NoError(t, err, "AddDeployAccountTransaction gave an Error")
+	require.NotNil(t, resp, "AddDeployAccountTransaction resp not nil")
+
 }
 
 // newDevnet creates a new devnet with the given URL.

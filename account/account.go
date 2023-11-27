@@ -3,6 +3,7 @@ package account
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/NethermindEth/juno/core/crypto"
@@ -33,7 +34,7 @@ type AccountInterface interface {
 	TransactionHashInvoke(invokeTxn rpc.InvokeTxnType) (*felt.Felt, error)
 	TransactionHashDeployAccount(tx rpc.DeployAccountType, contractAddress *felt.Felt) (*felt.Felt, error)
 	TransactionHashDeclare(tx rpc.DeclareTxnType) (*felt.Felt, error)
-	SignInvokeTransaction(ctx context.Context, tx *rpc.InvokeTxnV1) error
+	SignInvokeTransaction(ctx context.Context, tx rpc.InvokeTxnType) ([]*felt.Felt, error)
 	SignDeployAccountTransaction(ctx context.Context, tx *rpc.DeployAccountTxn, precomputeAddress *felt.Felt) error
 	SignDeclareTransaction(ctx context.Context, tx *rpc.DeclareTxnV2) error
 	PrecomputeAddress(deployerAddress *felt.Felt, salt *felt.Felt, classHash *felt.Felt, constructorCalldata []*felt.Felt) (*felt.Felt, error)
@@ -107,18 +108,14 @@ func (account *Account) Sign(ctx context.Context, msg *felt.Felt) ([]*felt.Felt,
 // - invokeTx: the InvokeTxnV1 struct representing the transaction to be invoked.
 // Returns:
 // - error: an error if there was an error in the signing or invoking process
-func (account *Account) SignInvokeTransaction(ctx context.Context, invokeTx *rpc.InvokeTxnV1) error {
+func (account *Account) SignInvokeTransaction(ctx context.Context, invokeTx rpc.InvokeTxnType) ([]*felt.Felt, error) {
 
-	txHash, err := account.TransactionHashInvoke(*invokeTx)
+	txHash, err := account.TransactionHashInvoke(invokeTx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	signature, err := account.Sign(ctx, txHash)
-	if err != nil {
-		return err
-	}
-	invokeTx.Signature = signature
-	return nil
+	fmt.Println("txHash", txHash)
+	return account.Sign(ctx, txHash)
 }
 
 // SignDeployAccountTransaction signs a deploy account transaction.
@@ -301,7 +298,7 @@ func (account *Account) TransactionHashInvoke(tx rpc.InvokeTxnType) (*felt.Felt,
 		)
 	case rpc.InvokeTxnV3:
 		// https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-8.md#protocol-changes
-		if txn.Version == "" || txn.ResourceBounds == (rpc.ResourceBoundsMapping{}) || len(txn.Calldata) == 0 || txn.Nonce == nil || txn.SenderAddress == nil || txn.PayMasterData == nil || txn.AccountDeploymentData == nil {
+		if txn.Version == "" || txn.ResourceBoundsMapping == (rpc.ResourceBoundsMapping{}) || len(txn.Calldata) == 0 || txn.Nonce == nil || txn.SenderAddress == nil || txn.PayMasterData == nil || txn.AccountDeploymentData == nil {
 			return nil, ErrNotAllParametersSet
 		}
 
@@ -318,7 +315,7 @@ func (account *Account) TransactionHashInvoke(tx rpc.InvokeTxnType) (*felt.Felt,
 			PREFIX_TRANSACTION,
 			txnVersionFelt,
 			txn.SenderAddress,
-			tipAndResourcesHash(txn.Tip.Impl().Uint64(), txn.ResourceBounds),
+			tipAndResourcesHash(txn.Tip.Impl().Uint64(), txn.ResourceBoundsMapping),
 			crypto.PoseidonArray(txn.PayMasterData...),
 			account.ChainId,
 			txn.Nonce,
