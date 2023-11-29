@@ -56,8 +56,8 @@ func main() {
 	// 0x13d46bc231a47e29ee1e3c7fab338e6b13c935e002f2be57f7318e88cbb872e
 	// 0x397ffc31dde066cab3f4a9f6315f5641620b2ee0622c042b91ade554ca4bff5
 	// 0x1fee7cfefa90a2878826212bb46bccddfb2473f306b7b17e4791bd0a486d4c6
-
-	myAddr, _ := new(felt.Felt).SetString("0x1fee7cfefa90a2878826212bb46bccddfb2473f306b7b17e4791bd0a486d4c6")
+	//
+	myAddr, _ := new(felt.Felt).SetString("0x6764832432bbe2e35a45bf7d5771e4551fcf760fa803d30afd3ec55140c57a7")
 
 	// Make read contract call
 	tx := rpc.FunctionCall{
