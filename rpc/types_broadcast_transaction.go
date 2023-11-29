@@ -77,6 +77,14 @@ type BroadcastDeclareTxnV3 struct {
 	FeeMode DataAvailabilityMode `json:"fee_data_availability_mode"`
 }
 
+type BroadcastDeployAccountTxnType interface{}
+
+var _ BroadcastDeployAccountTxnType = BroadcastDeployAccountTxn{}
+var _ BroadcastDeployAccountTxnType = BroadcastDeployAccountTxnV3{}
+
 type BroadcastDeployAccountTxn struct {
 	DeployAccountTxn
+}
+type BroadcastDeployAccountTxnV3 struct {
+	DeployAccountTxnV3
 }

@@ -74,7 +74,7 @@ func (provider *Provider) AddDeclareTransaction(ctx context.Context, declareTran
 // - deployAccountTransaction: The deploy account transaction to be added
 // Returns:
 // - *AddDeployAccountTransactionResponse: the response of adding the deploy account transaction or an error
-func (provider *Provider) AddDeployAccountTransaction(ctx context.Context, deployAccountTransaction BroadcastDeployAccountTxn) (*AddDeployAccountTransactionResponse, error) {
+func (provider *Provider) AddDeployAccountTransaction(ctx context.Context, deployAccountTransaction BroadcastDeployAccountTxnType) (*AddDeployAccountTransactionResponse, error) {
 	var result AddDeployAccountTransactionResponse
 	if err := do(ctx, provider.c, "starknet_addDeployAccountTransaction", &result, deployAccountTransaction); err != nil {
 		return nil, tryUnwrapToRPCErr(
