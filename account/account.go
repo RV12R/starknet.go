@@ -153,7 +153,7 @@ func (account *Account) SignDeployAccountTransactionv3(ctx context.Context, tx r
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("=-=-")
+	fmt.Println("hash:", hash)
 	return account.Sign(ctx, hash)
 	// if err != nil {
 	// 	return err
@@ -236,7 +236,7 @@ func (account *Account) TransactionHashDeployAccountV3(txn rpc.DeployAccountTxnV
 	if err != nil {
 		return nil, err
 	}
-	// https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/transactions/#deploy_account_hash_calculation
+
 	return crypto.PoseidonArray(
 		PREFIX_DEPLOY_ACCOUNT,
 		txnVersionFelt,

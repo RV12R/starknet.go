@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	network              string = "integration"
-	predeployedClassHash        = "0x01a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003"
+	network string = "integration"
+	// https://external.integration.starknet.io/feeder_gateway/get_transaction?transactionHash=0x29fd7881f14380842414cdfdd8d6c0b1f2174f8916edcfeb1ede1eb26ac3ef0
+	predeployedClassHash        = "0x2338634f11772ea342365abd5be9d9dc8a6f44f159ad782fdebd3db5d969738"
 	accountAddress       string = "0x043784df59268c02b716e20bf77797bd96c68c2f100b2a634e448c35e3ad363e"
 	pubKey               string = "0x049f060d2dffd3bf6f2c103b710baf519530df44529045f92c3903097e8d861f"
 	privKey              string = "0x043b7fe9d91942c98cd5fd37579bd99ec74f879c4c79d886633eecae9dad35fa"
@@ -55,7 +56,7 @@ func main() {
 	}
 
 	// https://goerli.voyager.online/tx/0x559d0c57b7651b7f8e1c25cc92ff2d0567bcecb62a36c62d7a3f3fb9319e140
-	guardian, _ := new(felt.Felt).SetString("0x0")
+	// guardian, _ := new(felt.Felt).SetString("0x0")
 
 	// Create transaction data
 	tx := rpc.DeployAccountTxnV3{
@@ -66,19 +67,18 @@ func main() {
 		ClassHash:           classHash,
 		ContractAddressSalt: PubKey,
 		ConstructorCalldata: []*felt.Felt{
-			PubKey,
-			guardian},
+			PubKey},
 		ResourceBounds: rpc.ResourceBoundsMapping{
 			L1Gas: rpc.ResourceBounds{
-				MaxAmount:       new(felt.Felt).SetUint64(12345678912345123123),
-				MaxPricePerUnit: new(felt.Felt).SetUint64(12345678912345123123),
+				MaxAmount:       new(felt.Felt).SetUint64(4328000220728),
+				MaxPricePerUnit: new(felt.Felt).SetUint64(4328000220728),
 			},
 			L2Gas: rpc.ResourceBounds{
 				MaxAmount:       new(felt.Felt).SetUint64(0),
 				MaxPricePerUnit: new(felt.Felt).SetUint64(0),
 			},
 		},
-		Tip:           new(felt.Felt).SetUint64(12345678912345),
+		Tip:           new(felt.Felt).SetUint64(0),
 		PayMasterData: []*felt.Felt{},
 		NonceDataMode: rpc.DAModeL1,
 		FeeMode:       rpc.DAModeL1,

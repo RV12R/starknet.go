@@ -15,7 +15,7 @@ import (
 
 var (
 	name                string = "integration"
-	someMainnetContract string = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+	someMainnetContract string = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d" // STRK
 	contractMethod      string = "balanceOf"
 )
 
@@ -57,7 +57,7 @@ func main() {
 	// 0x397ffc31dde066cab3f4a9f6315f5641620b2ee0622c042b91ade554ca4bff5
 	// 0x1fee7cfefa90a2878826212bb46bccddfb2473f306b7b17e4791bd0a486d4c6
 	//
-	myAddr, _ := new(felt.Felt).SetString("0x39180766dd93d979cd03e6ba93d3210fb7b7e56e01020942157e387a3613040")
+	myAddr, _ := new(felt.Felt).SetString("0x043784df59268c02b716e20bf77797bd96c68c2f100b2a634e448c35e3ad363e")
 
 	// Make read contract call
 	tx := rpc.FunctionCall{
