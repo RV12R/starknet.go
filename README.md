@@ -88,6 +88,7 @@ go run main.go
 
 > Check [here](examples/simpleInvoke/README.md) for more details
 
+> Check [here](https://github.com/NethermindEth/starknet.go/tree/main/examples) for Some FAQs answered by these examples.
 
 ### RPC
 
